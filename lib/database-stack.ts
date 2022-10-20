@@ -1,16 +1,38 @@
-import * as cdk from 'aws-cdk-lib';
-import { Construct } from 'constructs';
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
+import { aws_rds as rds, aws_ec2 as ec2, RemovalPolicy } from "aws-cdk-lib";
+import * as cdk from "aws-cdk-lib";
+import { Construct } from "constructs";
+import { IVpc } from "aws-cdk-lib/aws-ec2";
 
-export class VpcStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+export interface DatabaseStackProps extends cdk.StackProps {
+  readonly vpc: IVpc;
+}
+
+export class DatabaseStack extends cdk.Stack {
+  db: rds.DatabaseInstance;
+
+  constructor(scope: Construct, id: string, props: DatabaseStackProps) {
     super(scope, id, props);
 
-    // The code that defines your stack goes here
+    this.db = new rds.DatabaseInstance(this, "QuizMasterData", {
+      databaseName: "quizMasterData",
+      storageEncrypted: true,
+      engine: rds.DatabaseInstanceEngine.mysql({
+        version: rds.MysqlEngineVersion.VER_8_0_30,
+      }),
+      vpcSubnets: {
+        subnetGroupName: "database",
+      },
+      instanceType: ec2.InstanceType.of(
+        ec2.InstanceClass.T3,
+        ec2.InstanceSize.MICRO
+      ),
+      vpc: props.vpc,
+      removalPolicy: RemovalPolicy.DESTROY,
+      deleteAutomatedBackups: true,
+    });
 
-    // example resource
-    // const queue = new sqs.Queue(this, 'CdkModulesExampleQueue', {
-    //   visibilityTimeout: cdk.Duration.seconds(300)
-    // });
+    new cdk.CfnOutput(this, "DbSecretArn", {
+      value: this.db.secret!.secretArn,
+    });
   }
 }
