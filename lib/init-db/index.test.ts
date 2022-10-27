@@ -2,7 +2,7 @@ import { MySqlContainer, StartedMySqlContainer } from "testcontainers";
 import * as mysql from "mysql2/promise";
 
 import { handler } from "./index";
-import { SecretsManagerDbSecret } from "./db-secret";
+import { SecretsManagerDbSecret } from "../../src/middleware/db-secret";
 
 jest.setTimeout(120_000);
 

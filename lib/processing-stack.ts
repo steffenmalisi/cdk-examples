@@ -65,16 +65,28 @@ export class ProcessingStack extends cdk.Stack {
       }
     );
 
-    const dbInitializerResource = new cdk.CustomResource(
-      this,
-      "InitDbCustomResource",
-      {
-        serviceToken: dbInitializerProvider.serviceToken,
-        properties: {
-          hash: ProcessingStack.hashDbMigrations(),
-        },
-      }
-    );
+    new cdk.CustomResource(this, "InitDbCustomResource", {
+      serviceToken: dbInitializerProvider.serviceToken,
+      properties: {
+        hash: ProcessingStack.hashDbMigrations(),
+      },
+    });
+
+    const getAllQuizzesFunction = new lambda_nodejs.NodejsFunction(this, "GetAllQuizzes", {
+      runtime: lambda.Runtime.NODEJS_16_X,
+      entry: `${__dirname}/../src/backend/get-all-quizzes.ts`,
+      vpc: props.vpc,
+      vpcSubnets: {
+        subnetGroupName: "processing",
+      },
+      environment: {
+        DB_SECRET_ARN: props.db.secret!.secretArn,
+      },
+    });
+
+    getAllQuizzesFunction.node.addDependency(props.db);
+    props.db.secret!.grantRead(getAllQuizzesFunction);
+    getAllQuizzesFunction.connections.allowTo(props.db, ec2.Port.tcp(3306));
   }
 
   static hashDbMigrations(): string {

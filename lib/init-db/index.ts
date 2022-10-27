@@ -1,7 +1,7 @@
 import * as mysql from "mysql2";
 import { Logger, injectLambdaContext } from "@aws-lambda-powertools/logger";
 import middy from "@middy/core";
-import { SecretsManagerDbSecret, injectDbSecret } from "./db-secret";
+import { SecretsManagerDbSecret, injectDbSecret } from "../../src/middleware/db-secret";
 
 const marv = require("marv/api/promise");
 const marvDriver = require("marv-mysql-driver");
